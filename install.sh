@@ -139,7 +139,8 @@ echo "${tty_green}${ACUTY_BANNER}${tty_reset}"
 printf "\n\n"
 
 emph "Installing Acuty Agent:"
-read -r -p "Install Path [${DEFAULT_INSTALL_PATH}]: " INSTALL_PATH
+# TODO:
+# read -r -p "Install Path [${DEFAULT_INSTALL_PATH}]: " INSTALL_PATH
 INSTALL_PATH=${INSTALL_PATH:-${DEFAULT_INSTALL_PATH}}
 
 if [[ "$INSTALL_PATH" != /* ]]
@@ -158,6 +159,7 @@ if [[ ! -e "${INSTALL_PATH}" ]]; then
 fi
 
 binary="acuagent"
+service="acuty"
 artifact_md5=${LATEST_MD5}
 emph "Downloading artifact version ${LATEST_VERSION}"
 execute curl -fsSL "$(artifact_url)" -o "${INSTALL_PATH}"/${binary}_new
@@ -167,7 +169,18 @@ if [[ "$artifact_md5" != "$actual_md5" ]]; then
 fi
 execute chmod +x "${INSTALL_PATH}"/${binary}_new
 execute mv "${INSTALL_PATH}"/${binary}_new "${INSTALL_PATH}"/${binary}
+execute mkdir -p /etc/${service}
+execute mkdir -p /etc/${service}/message
+
+# test only
+execute cp /vagrant/agent "${INSTALL_PATH}"/${binary}
 
 cat << EOS
 - Acuty Agent has been installed to: ${INSTALL_PATH}.
 EOS
+
+emph "Bootstrap Acuty Agent to your system"
+execute "${INSTALL_PATH}"/${binary} bootstrap
+
+emph "Starting Acuty Agent service"
+execute service acuty-agent start
